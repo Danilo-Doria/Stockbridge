@@ -22,7 +22,8 @@ public class User {
     }
 
     public static User create(String fullName, String email, String passwordHash, Role role) {
-        return new User(null, fullName, email.trim().toLowerCase(), passwordHash, role, true);
+        String normalized = requireText(email, "El email es obligatorio").toLowerCase();
+        return new User(null, fullName, normalized, passwordHash, role, true);
     }
 
     public static User restore(Long id, String fullName, String email, String passwordHash,
@@ -30,9 +31,6 @@ public class User {
         if (id == null) throw new InvalidUserException("El id es obligatorio al reconstruir");
         return new User(id, fullName, email, passwordHash, role, active);
     }
-
-    public void deactivate() { this.active = false; }
-    public void activate()   { this.active = true; }
 
     private static String requireText(String v, String msg) {
         if (v == null || v.isBlank()) throw new InvalidUserException(msg);

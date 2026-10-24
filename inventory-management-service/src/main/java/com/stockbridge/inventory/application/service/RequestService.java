@@ -94,7 +94,7 @@ public class RequestService implements CreateRequestUseCase, GetRequestUseCase,
     }
 
     /**
-     * Una sola transacción: estado + stock + movimiento. Si algo falla, se revierte todo.
+     * Una sola transacción: estado + stock + movimiento. Si algo falla, se revierte.
      */
     @Override
     public RequestView deliver(Long id, Long performedBy) {

@@ -1,13 +1,13 @@
-package com.stockbridge.inventory;
+package com.stockbridge.supplieravailabilityservice;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class SimulacroApplication {
+public class SupplierApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(SimulacroApplication.class, args);
+        SpringApplication.run(SupplierApplication.class, args);
     }
 
 }

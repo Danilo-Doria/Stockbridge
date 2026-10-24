@@ -1,4 +1,4 @@
-package com.stockbridge.simulacro;
+package com.stockbridge.inventory;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

@@ -11,8 +11,8 @@
     <groupId>com.stockbridge</groupId>
     <artifactId>inventory-management-service</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>simulacro</name>
-    <description>simulacro</description>
+    <name>inventory-management-service</name>
+    <description>Gestión de inventario y solicitudes internas de StockBridge</description>
     <url/>
     <licenses>
         <license/>

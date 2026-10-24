@@ -1,4 +1,4 @@
-package com.stockbridge.simulacro;
+package com.stockbridge.inventory;
 
 import org.springframework.boot.SpringApplication;
 

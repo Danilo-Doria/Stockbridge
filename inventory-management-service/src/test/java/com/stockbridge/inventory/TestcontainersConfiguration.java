@@ -1,4 +1,4 @@
-package com.stockbridge.simulacro;
+package com.stockbridge.inventory;
 
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;

@@ -73,12 +73,16 @@ public class Request {
         return userId.equals(candidateUserId);
     }
 
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
     public Long getId() {
         return id;
     }
 
-    public Long getUserId() {
-        return userId;
+    public String getObservation() {
+        return observation;
     }
 
     public Long getProductId() {
@@ -89,15 +93,11 @@ public class Request {
         return quantity;
     }
 
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
     public RequestStatus getStatus() {
         return status;
     }
 
-    public String getObservation() {
-        return observation;
+    public Long getUserId() {
+        return userId;
     }
 }

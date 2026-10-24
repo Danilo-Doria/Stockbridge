@@ -7,8 +7,8 @@ import java.math.BigDecimal;
 
 public class Product {
 
-    private Long id;
-    private String code;
+    private final Long id;
+    private final String code;
     private String name;
     private String description;
     private String category;
@@ -16,56 +16,40 @@ public class Product {
     private int stock;
     private boolean active;
 
-    private Product() {
+    private Product(Long id, String code, String name, String description,
+                    String category, BigDecimal price, int stock, boolean active) {
+        this.id = id;
+        this.code = requireText(code, "El código es obligatorio");
+        this.name = requireText(name, "El nombre es obligatorio");
+        this.description = description;
+        this.category = requireText(category, "La categoría es obligatoria");
+        this.price = requirePositivePrice(price);
+        this.stock = requireNonNegativeStock(stock);
+        this.active = active;
     }
 
     public static Product create(String code, String name, String description,
                                  String category, BigDecimal price, int stock) {
-        return build(null, code, name, description, category, price, stock, true);
+        return new Product(null, code, name, description, category, price, stock, true);
     }
 
     public static Product restore(Long id, String code, String name, String description,
                                   String category, BigDecimal price, int stock, boolean active) {
-        return build(id, code, name, description, category, price, stock, active);
-    }
-
-    private static Product build(Long id, String code, String name, String description,
-                                 String category, BigDecimal price, int stock, boolean active) {
-        requireText(code, "El código es obligatorio");
-        requireText(name, "El nombre es obligatorio");
-        requireText(category, "La categoría es obligatoria");
-        requirePositivePrice(price);
-        requireNonNegativeStock(stock);
-
-        Product p = new Product();
-        p.id = id;
-        p.code = code.trim();
-        p.name = name.trim();
-        p.description = description;
-        p.category = category.trim();
-        p.price = price;
-        p.stock = stock;
-        p.active = active;
-        return p;
+        if (id == null) {
+            throw new InvalidProductException("El id es obligatorio al reconstruir");
+        }
+        return new Product(id, code, name, description, category, price, stock, active);
     }
 
     public void update(String name, String description, String category, BigDecimal price) {
-        requireText(name, "El nombre es obligatorio");
-        requireText(category, "La categoría es obligatoria");
-        requirePositivePrice(price);
-        this.name = name.trim();
+        this.name = requireText(name, "El nombre es obligatorio");
         this.description = description;
-        this.category = category.trim();
-        this.price = price;
+        this.category = requireText(category, "La categoría es obligatoria");
+        this.price = requirePositivePrice(price);
     }
 
-    public void activate() {
-        this.active = true;
-    }
-
-    public void deactivate() {
-        this.active = false;
-    }
+    public void activate()   { this.active = true; }
+    public void deactivate() { this.active = false; }
 
     public boolean hasEnoughStock(int quantity) {
         return stock >= quantity;
@@ -90,22 +74,27 @@ public class Product {
         return stock < minimum;
     }
 
-    private static void requireText(String value, String message) {
+    // ---------- Validaciones: devuelven el valor para usarlas al asignar ----------
+
+    private static String requireText(String value, String message) {
         if (value == null || value.isBlank()) {
             throw new InvalidProductException(message);
         }
+        return value.trim();
     }
 
-    private static void requirePositivePrice(BigDecimal price) {
+    private static BigDecimal requirePositivePrice(BigDecimal price) {
         if (price == null || price.compareTo(BigDecimal.ZERO) <= 0) {
             throw new InvalidProductException("El precio debe ser mayor que cero");
         }
+        return price;
     }
 
-    private static void requireNonNegativeStock(int stock) {
+    private static int requireNonNegativeStock(int stock) {
         if (stock < 0) {
             throw new InvalidProductException("El stock no puede ser negativo");
         }
+        return stock;
     }
 
     private static void requirePositiveQuantity(int quantity) {
@@ -114,24 +103,28 @@ public class Product {
         }
     }
 
-    public Long getId() {
-        return id;
+    public boolean isActive() {
+        return active;
+    }
+
+    public String getCategory() {
+        return category;
     }
 
     public String getCode() {
         return code;
     }
 
-    public String getName() {
-        return name;
-    }
-
     public String getDescription() {
         return description;
     }
 
-    public String getCategory() {
-        return category;
+    public Long getId() {
+        return id;
+    }
+
+    public String getName() {
+        return name;
     }
 
     public BigDecimal getPrice() {
@@ -140,9 +133,5 @@ public class Product {
 
     public int getStock() {
         return stock;
-    }
-
-    public boolean isActive() {
-        return active;
     }
 }

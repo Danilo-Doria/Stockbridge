@@ -47,6 +47,11 @@ public class ProductPersistenceAdapter implements ProductRepositoryPort {
         return toPageResult(repository.findLowStock(minimum, PageRequest.of(page, size, Sort.by("stock"))));
     }
 
+    @Override
+    public Optional<Product> findByIdForUpdate(Long id) {
+        return repository.findByIdForUpdate(id).map(mapper::toDomain);
+    }
+
     private PageResult<Product> toPageResult(Page<ProductEntity> p) {
         return new PageResult<>(p.getContent().stream().map(mapper::toDomain).toList(),
                 p.getNumber(), p.getSize(), p.getTotalElements());

@@ -15,4 +15,6 @@ public interface ProductRepositoryPort {
     PageResult<Product> findAll(int page, int size);
 
     PageResult<Product> findByStockLessThan(int minimum, int page, int size);
+
+    Optional<Product> findByIdForUpdate(Long id);
 }

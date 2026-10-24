@@ -9,6 +9,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -17,12 +18,13 @@ import java.util.Map;
 @Slf4j
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(ProductNotFoundException.class)
-    ProblemDetail notFound(ProductNotFoundException ex) {
+    @ExceptionHandler({ProductNotFoundException.class, RequestNotFoundException.class, UserNotFoundException.class})
+    ProblemDetail notFound(DomainException ex) {
         return problem(HttpStatus.NOT_FOUND, "Recurso no encontrado", ex.getMessage());
     }
 
-    @ExceptionHandler({DuplicateProductCodeException.class, InsufficientStockException.class})
+    @ExceptionHandler({DuplicateProductCodeException.class, InsufficientStockException.class,
+            InvalidStateTransitionException.class})
     ProblemDetail conflict(DomainException ex) {
         return problem(HttpStatus.CONFLICT, "Conflicto con el estado actual", ex.getMessage());
     }
@@ -42,15 +44,10 @@ public class GlobalExceptionHandler {
         return problem(HttpStatus.UNPROCESSABLE_ENTITY, "Regla de negocio violada", ex.getMessage());
     }
 
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    ProblemDetail validation(MethodArgumentNotValidException ex) {
-        ProblemDetail pd = problem(HttpStatus.BAD_REQUEST, "Datos inválidos",
-                "Uno o más campos no cumplen las validaciones");
-        Map<String, String> errors = new LinkedHashMap<>();
-        ex.getBindingResult().getFieldErrors()
-                .forEach(f -> errors.putIfAbsent(f.getField(), f.getDefaultMessage()));
-        pd.setProperty("errors", errors);
-        return pd;
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)   // org.springframework.web.method.annotation
+    ProblemDetail badParam(MethodArgumentTypeMismatchException ex) {
+        return problem(HttpStatus.BAD_REQUEST, "Parámetro inválido",
+                "El valor de '" + ex.getName() + "' no tiene el formato esperado");
     }
 
     @ExceptionHandler(Exception.class)

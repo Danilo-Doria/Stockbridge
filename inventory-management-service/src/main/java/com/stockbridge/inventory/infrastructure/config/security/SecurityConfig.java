@@ -28,8 +28,19 @@ public class SecurityConfig {
                         .accessDeniedHandler(errorHandler))
                 .authorizeHttpRequests(a -> a
                         .requestMatchers("/auth/**", "/actuator/health", "/actuator/info").permitAll()
+
                         .requestMatchers(HttpMethod.GET, "/api/products/**").authenticated()
                         .requestMatchers("/api/products/**").hasRole("ADMIN")
+
+                        .requestMatchers("/api/users/**").hasRole("ADMIN")
+                        .requestMatchers("/api/movements/**").hasAnyRole("BODEGA", "ADMIN")
+
+                        .requestMatchers(HttpMethod.PATCH, "/api/requests/*/approve",
+                                "/api/requests/*/reject", "/api/requests/*/deliver").hasAnyRole("BODEGA", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/requests/mine").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/requests").hasAnyRole("BODEGA", "ADMIN")
+                        .requestMatchers("/api/requests/**").authenticated()   // create, get por id, cancel (la propiedad se valida en el caso de uso)
+
                         .anyRequest().authenticated())
                 .addFilterBefore(new JwtAuthenticationFilter(jwtService),
                         UsernamePasswordAuthenticationFilter.class)

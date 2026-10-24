@@ -8,7 +8,7 @@ public class User {
     private final String fullName;
     private final String email;
     private final String passwordHash;
-    private final Role role;
+    private Role role;
     private boolean active;
 
     private User(Long id, String fullName, String email, String passwordHash, Role role, boolean active) {
@@ -37,6 +37,11 @@ public class User {
     private static String requireText(String v, String msg) {
         if (v == null || v.isBlank()) throw new InvalidUserException(msg);
         return v.trim();
+    }
+
+    public void changeRole(Role newRole) {
+        if (newRole == null) throw new InvalidUserException("El rol es obligatorio");
+        this.role = newRole;
     }
 
     public boolean isActive() {

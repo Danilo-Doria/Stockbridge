@@ -1,12 +1,11 @@
 package com.stockbridge.inventory.infrastructure.adapter.in.rest.exception;
 
-import com.stockbridge.inventory.domain.exception.DomainException;
-import com.stockbridge.inventory.domain.exception.DuplicateProductCodeException;
-import com.stockbridge.inventory.domain.exception.InsufficientStockException;
-import com.stockbridge.inventory.domain.exception.ProductNotFoundException;
+import com.stockbridge.inventory.domain.exception.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -26,6 +25,16 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({DuplicateProductCodeException.class, InsufficientStockException.class})
     ProblemDetail conflict(DomainException ex) {
         return problem(HttpStatus.CONFLICT, "Conflicto con el estado actual", ex.getMessage());
+    }
+
+    @ExceptionHandler(EmailAlreadyRegisteredException.class)
+    ProblemDetail emailTaken(EmailAlreadyRegisteredException ex) {
+        return problem(HttpStatus.CONFLICT, "Conflicto con el estado actual", ex.getMessage());
+    }
+
+    @ExceptionHandler(InvalidCredentialsException.class)
+    ProblemDetail badCredentials(InvalidCredentialsException ex) {
+        return problem(HttpStatus.UNAUTHORIZED, "No autenticado", ex.getMessage());
     }
 
     @ExceptionHandler(DomainException.class)           // cualquier otra regla de negocio
@@ -48,6 +57,16 @@ public class GlobalExceptionHandler {
     ProblemDetail unexpected(Exception ex) {
         log.error("Error inesperado", ex);
         return problem(HttpStatus.INTERNAL_SERVER_ERROR, "Error interno", "Ocurrió un error inesperado");
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)       // org.springframework.security.access
+    ProblemDetail denied(AccessDeniedException ex) {
+        return problem(HttpStatus.FORBIDDEN, "Acceso denegado", "No tienes permisos para este recurso");
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    ProblemDetail unreadable(HttpMessageNotReadableException ex) {
+        return problem(HttpStatus.BAD_REQUEST, "Cuerpo inválido", "El JSON de la petición está mal formado");
     }
 
     private ProblemDetail problem(HttpStatus status, String title, String detail) {

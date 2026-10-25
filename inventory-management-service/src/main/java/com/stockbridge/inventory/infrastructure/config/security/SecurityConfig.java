@@ -40,6 +40,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/requests/mine").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/requests").hasAnyRole("BODEGA", "ADMIN")
                         .requestMatchers("/api/requests/**").authenticated()   // create, get por id, cancel (la propiedad se valida en el caso de uso)
+                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
 
                         .anyRequest().authenticated())
                 .addFilterBefore(new JwtAuthenticationFilter(jwtService),

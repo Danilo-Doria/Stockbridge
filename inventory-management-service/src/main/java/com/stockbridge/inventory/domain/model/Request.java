@@ -69,6 +69,12 @@ public class Request {
         this.status = target;
     }
 
+    public void appendObservation(String note) {
+        if (note == null || note.isBlank()) return;
+        String merged = (observation == null || observation.isBlank()) ? note : observation + " | " + note;
+        this.observation = merged.length() > 500 ? merged.substring(0, 500) : merged;
+    }
+
     public boolean isOwnedBy(Long candidateUserId) {
         return userId.equals(candidateUserId);
     }

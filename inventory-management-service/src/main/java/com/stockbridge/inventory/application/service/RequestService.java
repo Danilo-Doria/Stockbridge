@@ -9,6 +9,7 @@ import com.stockbridge.inventory.application.port.in.ManageRequestUseCase;
 import com.stockbridge.inventory.application.port.out.MovementRepositoryPort;
 import com.stockbridge.inventory.application.port.out.ProductRepositoryPort;
 import com.stockbridge.inventory.application.port.out.RequestRepositoryPort;
+import com.stockbridge.inventory.application.port.out.SupplierAvailabilityPort;
 import com.stockbridge.inventory.domain.exception.InactiveProductException;
 import com.stockbridge.inventory.domain.exception.InsufficientStockException;
 import com.stockbridge.inventory.domain.exception.ProductNotFoundException;
@@ -25,27 +26,34 @@ public class RequestService implements CreateRequestUseCase, GetRequestUseCase,
     private final RequestRepositoryPort requests;
     private final ProductRepositoryPort products;
     private final MovementRepositoryPort movements;
+    private final SupplierAvailabilityPort supplierAvailability;
 
-    public RequestService(RequestRepositoryPort requests, ProductRepositoryPort products,
-                          MovementRepositoryPort movements) {
+    public RequestService(MovementRepositoryPort movements, RequestRepositoryPort requests, ProductRepositoryPort products, SupplierAvailabilityPort supplierAvailability) {
+        this.movements = movements;
         this.requests = requests;
         this.products = products;
-        this.movements = movements;
+        this.supplierAvailability = supplierAvailability;
     }
 
     @Override
     public RequestView create(CreateRequestCommand c) {
-        Request request = Request.create(c.userId(), c.productId(), c.quantity(), c.observation()); // valida cantidad
+        Request request = Request.create(c.userId(), c.productId(), c.quantity(), c.observation());
         Product product = products.findById(c.productId())
                 .orElseThrow(() -> new ProductNotFoundException(c.productId()));
         if (!product.isActive()) throw new InactiveProductException(product.getCode());
+
         if (!product.hasEnoughStock(c.quantity())) {
-            // Más adelante: aquí se consultará el supplier-availability-service
-            throw new InsufficientStockException("Stock insuficiente para " + product.getCode()
-                    + ": disponible " + product.getStock() + ", solicitado " + c.quantity());
+            SupplierAvailabilityPort.SupplierAvailability s = supplierAvailability.check(product.getCode(), c.quantity(), product.getCategory());
+            if (!s.available()) {
+                throw new InsufficientStockException("Stock insuficiente para " + product.getCode()
+                        + " (local: " + product.getStock() + ", proveedor: " + s.availableQuantity()
+                        + ", solicitado: " + c.quantity() + ")");
+            }
+            request.appendObservation("Sin stock local; proveedor " + s.supplierCode()
+                    + " tiene " + s.availableQuantity() + " u., entrega estimada en "
+                    + s.estimatedDeliveryDays() + " días");
         }
-        Request saved = requests.save(request);
-        return view(saved.getId());
+        return view(requests.save(request).getId());
     }
 
     @Override
@@ -111,7 +119,6 @@ public class RequestService implements CreateRequestUseCase, GetRequestUseCase,
         return view(id);
     }
 
-    // ---------- privados ----------
     private Request load(Long id) {
         return requests.findById(id).orElseThrow(() -> new RequestNotFoundException(id));
     }

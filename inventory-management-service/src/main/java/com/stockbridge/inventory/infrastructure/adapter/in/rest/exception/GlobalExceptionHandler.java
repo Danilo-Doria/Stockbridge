@@ -40,12 +40,6 @@ public class GlobalExceptionHandler {
         return problem(HttpStatus.UNPROCESSABLE_ENTITY, "Regla de negocio violada", ex.getMessage());
     }
 
-    @ExceptionHandler(MethodArgumentTypeMismatchException.class)   // org.springframework.web.method.annotation
-    ProblemDetail badParam(MethodArgumentTypeMismatchException ex) {
-        return problem(HttpStatus.BAD_REQUEST, "Parámetro inválido",
-                "El valor de '" + ex.getName() + "' no tiene el formato esperado");
-    }
-
     @ExceptionHandler(Exception.class)
     ProblemDetail unexpected(Exception ex) {
         log.error("Error inesperado", ex);
@@ -60,6 +54,18 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(HttpMessageNotReadableException.class)
     ProblemDetail unreadable(HttpMessageNotReadableException ex) {
         return problem(HttpStatus.BAD_REQUEST, "Cuerpo inválido", "El JSON de la petición está mal formado");
+    }
+
+    @ExceptionHandler(SupplierUnavailableException.class)
+    ProblemDetail supplierDown(SupplierUnavailableException ex) {
+        return problem(HttpStatus.SERVICE_UNAVAILABLE, "Proveedor no disponible",
+                "No se pudo consultar la disponibilidad externa. Intenta más tarde.");
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    ProblemDetail badParam(MethodArgumentTypeMismatchException ex) {
+        return problem(HttpStatus.BAD_REQUEST, "Parámetro inválido",
+                "El valor de '" + ex.getName() + "' no tiene el formato esperado");
     }
 
     private ProblemDetail problem(HttpStatus status, String title, String detail) {

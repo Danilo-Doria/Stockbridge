@@ -1,4 +1,4 @@
-package com.stockbridge.supplieravailabilityservice;
+package com.stockbridge.supplier;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

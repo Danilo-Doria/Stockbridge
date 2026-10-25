@@ -7,3 +7,45 @@ services:
       POSTGRES_PASSWORD: inventory
     ports:
       - "5439:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U inventory -d inventory"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - stockbridge-net
+
+  supplier-availability-service:
+    build: ./supplier-availability-service
+    ports:
+      - "8081:8081"
+    networks:
+      - stockbridge-net
+
+  inventory-management-service:
+    build: ./inventory-management-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      supplier-availability-service:
+        condition: service_started
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/inventory
+      SPRING_DATASOURCE_USERNAME: inventory
+      SPRING_DATASOURCE_PASSWORD: inventory
+      SUPPLIER_URL: http://supplier-availability-service:8081
+      JWT_SECRET: cambia-este-secreto-por-uno-de-minimo-32-caracteres
+      ADMIN_EMAIL: admin@gmail.com
+      ADMIN_PASSWORD: admin123
+    ports:
+      - "8080:8080"
+    networks:
+      - stockbridge-net
+
+volumes:
+  pgdata:
+
+networks:
+  stockbridge-net:

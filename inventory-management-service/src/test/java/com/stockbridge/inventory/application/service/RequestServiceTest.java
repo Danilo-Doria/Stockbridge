@@ -30,6 +30,7 @@ class RequestServiceTest {
     @Mock ProductRepositoryPort products;
     @Mock MovementRepositoryPort movements;
     @Mock SupplierAvailabilityPort supplier;
+    @Mock MetricsPort metrics;
     @InjectMocks RequestService service;
 
     // ---------- helpers ----------

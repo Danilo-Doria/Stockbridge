@@ -6,10 +6,7 @@ import com.stockbridge.inventory.application.port.in.CreateRequestUseCase;
 import com.stockbridge.inventory.application.port.in.GetRequestUseCase;
 import com.stockbridge.inventory.application.port.in.ListRequestsUseCase;
 import com.stockbridge.inventory.application.port.in.ManageRequestUseCase;
-import com.stockbridge.inventory.application.port.out.MovementRepositoryPort;
-import com.stockbridge.inventory.application.port.out.ProductRepositoryPort;
-import com.stockbridge.inventory.application.port.out.RequestRepositoryPort;
-import com.stockbridge.inventory.application.port.out.SupplierAvailabilityPort;
+import com.stockbridge.inventory.application.port.out.*;
 import com.stockbridge.inventory.domain.exception.InactiveProductException;
 import com.stockbridge.inventory.domain.exception.InsufficientStockException;
 import com.stockbridge.inventory.domain.exception.ProductNotFoundException;
@@ -27,11 +24,13 @@ public class RequestService implements CreateRequestUseCase, GetRequestUseCase,
     private final ProductRepositoryPort products;
     private final MovementRepositoryPort movements;
     private final SupplierAvailabilityPort supplierAvailability;
+    private final MetricsPort metrics;
 
-    public RequestService(MovementRepositoryPort movements, RequestRepositoryPort requests, ProductRepositoryPort products, SupplierAvailabilityPort supplierAvailability) {
-        this.movements = movements;
+    public RequestService(MetricsPort metrics, RequestRepositoryPort requests, ProductRepositoryPort products, MovementRepositoryPort movements, SupplierAvailabilityPort supplierAvailability) {
+        this.metrics = metrics;
         this.requests = requests;
         this.products = products;
+        this.movements = movements;
         this.supplierAvailability = supplierAvailability;
     }
 
@@ -53,7 +52,9 @@ public class RequestService implements CreateRequestUseCase, GetRequestUseCase,
                     + " tiene " + s.availableQuantity() + " u., entrega estimada en "
                     + s.estimatedDeliveryDays() + " días");
         }
-        return view(requests.save(request).getId());
+        Long id = requests.save(request).getId();
+        metrics.count("stockbridge.requests.created");
+        return view(id);
     }
 
     @Override
@@ -81,6 +82,7 @@ public class RequestService implements CreateRequestUseCase, GetRequestUseCase,
         Request r = load(id);
         r.approve();
         requests.save(r);
+        metrics.count("stockbridge.requests.approved");
         return view(id);
     }
 
@@ -89,6 +91,7 @@ public class RequestService implements CreateRequestUseCase, GetRequestUseCase,
         Request r = load(id);
         r.reject(reason);
         requests.save(r);
+        metrics.count("stockbridge.requests.rejected");
         return view(id);
     }
 
@@ -98,6 +101,7 @@ public class RequestService implements CreateRequestUseCase, GetRequestUseCase,
         checkAccess(r, requesterId, role);
         r.cancel();
         requests.save(r);
+        metrics.count("stockbridge.requests.cancelled");
         return view(id);
     }
 
@@ -116,6 +120,7 @@ public class RequestService implements CreateRequestUseCase, GetRequestUseCase,
         products.save(p);
         requests.save(r);
         movements.save(InventoryMovement.outbound(p.getId(), r.getId(), performedBy, r.getQuantity()));
+        metrics.count("stockbridge.requests.delivered");
         return view(id);
     }
 

@@ -3,6 +3,8 @@ package com.stockbridge.inventory.infrastructure.adapter.out.supplier;
 import com.stockbridge.inventory.application.port.out.SupplierAvailabilityPort;
 import com.stockbridge.inventory.domain.exception.SupplierUnavailableException;
 import com.stockbridge.inventory.infrastructure.config.SupplierProperties;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
@@ -16,16 +18,15 @@ import java.time.Duration;
 @Component
 public class SupplierHttpAdapter implements SupplierAvailabilityPort {
 
-    private record Req(String productCode, int quantity, String category) {
-    }
-
+    private record Req(String productCode, int quantity, String category) {}
     private record Res(String supplierCode, boolean available,
-                       int availableQuantity, int estimatedDeliveryDays) {
-    }
+                       int availableQuantity, int estimatedDeliveryDays) {}
 
     private final RestClient client;
+    private final MeterRegistry registry;
 
-    public SupplierHttpAdapter(SupplierProperties props) {
+    public SupplierHttpAdapter(SupplierProperties props, MeterRegistry registry) {
+        this.registry = registry;
         HttpClient http = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofMillis(props.connectTimeoutMs()))
                 .build();
@@ -36,17 +37,22 @@ public class SupplierHttpAdapter implements SupplierAvailabilityPort {
 
     @Override
     public SupplierAvailability check(String productCode, int quantity, String category) {
-        long start = System.nanoTime();
+        Timer.Sample sample = Timer.start(registry);
         try {
             Res r = client.post().uri("/api/suppliers/check-availability")
                     .body(new Req(productCode, quantity, category))
                     .retrieve()
                     .body(Res.class);
-            if (r == null) throw new SupplierUnavailableException("Respuesta vacía del proveedor", null);
-            log.info("Proveedor consultado para {} en {} ms", productCode, (System.nanoTime() - start) / 1_000_000);
+            if (r == null) {
+                throw new SupplierUnavailableException("Respuesta vacía del proveedor", null);
+            }
+            sample.stop(registry.timer("stockbridge.supplier.latency", "outcome", "ok"));
+            log.info("Proveedor consultado para {}", productCode);
             return new SupplierAvailability(r.supplierCode(), r.available(),
                     r.availableQuantity(), r.estimatedDeliveryDays());
         } catch (RestClientException ex) {   // timeout, conexión rechazada, 4xx o 5xx
+            sample.stop(registry.timer("stockbridge.supplier.latency", "outcome", "error"));
+            registry.counter("stockbridge.supplier.errors").increment();
             log.warn("Falla consultando proveedor para {}: {}", productCode, ex.getMessage());
             throw new SupplierUnavailableException("No se pudo consultar al proveedor", ex);
         }

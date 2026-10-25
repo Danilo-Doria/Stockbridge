@@ -12,6 +12,8 @@ import java.util.Optional;
 
 public interface SpringDataProductRepository extends JpaRepository<ProductEntity, Long> {
 
+    long countByStockLessThan(int minimum);
+
     boolean existsByCode(String code);
 
     @Query("select p from ProductEntity p where p.stock < :minimum")

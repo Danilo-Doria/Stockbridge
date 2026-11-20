@@ -529,3 +529,11 @@ Los timeouts (2 s conexión, 3 s lectura) cortan la espera, se cuenta el error e
 
 **¿Qué controles impiden usar un JWT manipulado o acceder a recursos administrativos?**
 La firma HMAC se verifica en cada petición (si cambia el payload, la firma no coincide: 401) y las rutas administrativas exigen `ROLE_ADMIN` (403 en caso contrario).
+
+---
+
+## 👨💻 Author
+
+- GitHub: **[Danilo-Doria](https://github.com/Danilo-Doria)**
+- LinkedIn: **[Danilo Doria Diaz](https://www.linkedin.com/in/danilo-doria-diaz)**
+- Mail: **danilodoria519@gmail.com**
